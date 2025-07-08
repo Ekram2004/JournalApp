@@ -39,7 +39,7 @@ journal-app/ ├── index.js ├── .env ├── models/ │ ├── U
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/journal-app.git
+   git clone https://github.com/Ekram2004/journalApp.git
    cd journal-app
 Install dependencies
 npm install
