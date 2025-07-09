@@ -5,7 +5,7 @@ const verifyToken = require('../middleware/authMiddleware');
 const route = express();
 route.use(express.json());
 
-route.post("/journal", verifyToken, async (req, res) => {
+route.post("/", verifyToken, async (req, res) => {
   try {
     const { title, content } = req.body;
     const journal = new Journal({
@@ -23,20 +23,37 @@ route.post("/journal", verifyToken, async (req, res) => {
 });
 //Get all the journals
 
-route.get("/journal", verifyToken, async (req, res) => {
+route.get('/', verifyToken, async (req, res) => {
   try {
-    const journals = await Journal.find({ userId: req.user.userId });
+    const { search, sort, date } = req.query;
+
+    const query = { userId: req.user.userId };
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+      end.setDate(end.getDate() + 1);
+      query.createdAt = { $gte: start, $lt: end };
+    }
+    const sortOrder = sort === "asc" ? 1 : -1;
+    const journals = await Journal.find(query).sort({ createdAt: sortOrder });
     res.status(200).json(journals);
   } catch (err) {
-    console.error("Fetch journals error:", err);
+    console.error("GET journal error:", err);
     res.status(500).json({ error: "Failed to fetch journals" });
   }
+
 });
 
 
-
 //update the tasks
-route.put('/journal/:id', verifyToken, async (req, res) => {
+route.put('//:id', verifyToken, async (req, res) => {
     try {
         const updated = await Journal.findByIdAndUpdate(
             {
@@ -60,7 +77,7 @@ route.put('/journal/:id', verifyToken, async (req, res) => {
 
 //Delete journal
 
-route.delete('/journal/:id', verifyToken, async (req, res) => {
+route.delete('//:id', verifyToken, async (req, res) => {
     try {
         const deleted = await Journal.findByIdAndDelete({
             _id: req.params.id,
