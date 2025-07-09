@@ -53,27 +53,34 @@ route.get('/', verifyToken, async (req, res) => {
 
 
 //update the tasks
-route.put('//:id', verifyToken, async (req, res) => {
-    try {
-        const updated = await Journal.findByIdAndUpdate(
-            {
-                _id: req.params.id,
-                user: req.user.userId,
-            },
-            req.body,
-            { new: true }
-        );
-        if (!updated) {
-            return res
-                .status(404)
-                .json({ error: "journal not found or an authorized update" });
-        }
-        res.status(200).json(updated);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to update journal" });
+route.put("/:id", verifyToken, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const journalId = req.params.id;
+
+    // Find the journal and make sure it belongs to the current user
+    const journal = await Journal.findOne({
+      _id: journalId,
+      user: req.user.userId,
+    });
+    if (!journal) {
+      return res
+        .status(404)
+        .json({ error: "Journal not found or unauthorized" });
     }
 
+    // Update journal fields
+    if (title) journal.title = title;
+    if (content) journal.content = content;
+
+    await journal.save();
+    res.status(200).json({ message: "Journal updated successfully", journal });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update journal" });
+  }
 });
+
 
 //Delete journal
 
